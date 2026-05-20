@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dart & Flutter - Parte 2: Arquitectura y Rendimiento - Soltel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+/* IDENTIDAD VISUAL SOLTEL Y CONFIGURACIÓN BASE */
+:root {
+  --soltel-navy: #1a2039;
+  --soltel-red: #eb4b4b;
+  --soltel-white: #ffffff;
+  --soltel-gray: #f0f1f5;
+  --text-main: #ffffff;
+  --text-sub: #cbd5e1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: #0f172a;
+  display: grid;
+  gap: 40px;
+  grid-template-columns: 1fr;
+  margin: 0;
+  min-height: 100vh;
+  padding: 50px 0;
+  place-items: center;
+}
+
+/* CONTENEDOR PRINCIPAL EXTENDIDO PARA MASTERCLASS */
+.slide-container {
+  align-items: center;
+  background-color: var(--soltel-navy);
+  border-radius: 6px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Urbanist', sans-serif;
+  height: 900px;
+  justify-content: flex-start;
+  padding: 50px 60px;
+  position: relative;
+  width: 1550px;
+}
+
+/* ENCABEZADO PROTEGIDO */
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 25px;
+  border-left: 8px solid var(--soltel-red);
+  padding-left: 25px;
+}
+
+.slide-title {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--soltel-white);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+  padding-right: 20px;
+}
+
+.slide-logo-right {
+  height: 45px;
+  flex-shrink: 0;
+}
+
+/* TRAMA DE PUNTOS SOLTEL DE FONDO */
+.slide-container::before {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  right: -50px;
+  width: 700px;
+  height: 500px;
+  background-image: radial-gradient(var(--soltel-red) 2px, transparent 2px);
+  background-size: 20px 20px;
+  opacity: 0.10;
+  transform: rotate(-15deg);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.slide-container > * { position: relative; z-index: 1; }
+
+/* TIPOGRAFÍA GENERAL */
+h1, h2, h3, h4 { color: var(--soltel-white); font-weight: 700; margin: 0; }
+p, li { color: var(--text-sub); font-size: 18px; line-height: 1.6; }
+
+/* EDITOR DE CÓDIGO DE ALTA DENSIDAD */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  background: #0b0f19;
+  padding: 25px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+  font-size: 13.5px;
+  width: 100%;
+  height: 680px;
+  line-height: 1.5;
+  box-shadow: inset 0 2px 10px rgba(0,0,0,0.8);
+  overflow-y: auto;
+  overflow-x: auto;
+  white-space: pre;
+}
+
+/* COLORES DE SINTAXIS (THEME TIPO DARCULA/VSCODE) */
+.keyword { color: #ff7b72; font-weight: 600; }
+.type { color: #79c0ff; font-weight: 500; }
+.string { color: #a5d6ff; }
+.comment { color: #8b949e; font-style: italic; }
+.number { color: #d2a8ff; }
+.annotation { color: #3fb950; }
+.property { color: #e5c07b; }
+
+/* LAYOUTS ESTRUCTURALES */
+.content-area { display: flex; flex-direction: column; flex-grow: 1; justify-content: flex-start; width: 100%; }
+.two-column { display: grid; grid-template-columns: 1.4fr 0.6fr; gap: 40px; width: 100%; align-items: start; height: 100%; }
+.explanation-box { background: rgba(255, 255, 255, 0.03); padding: 30px; border-radius: 8px; border-left: 4px solid var(--soltel-red); height: 680px; overflow-y: auto; }
+.explanation-box h3 { font-size: 24px; margin-bottom: 20px; color: var(--soltel-white); border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px; }
+.explanation-box h4 { font-size: 18px; margin-top: 20px; margin-bottom: 10px; color: var(--soltel-red); }
+.explanation-box ul { padding-left: 20px; margin: 0; }
+.explanation-box li { margin-bottom: 14px; font-size: 16px; text-align: justify; }
+
+/* SCROLLBAR PERSONALIZADO PARA CONTENEDORES INTERNOS */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
+::-webkit-scrollbar-thumb { background: var(--soltel-red); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #ff6b6b; }
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="slide1" style="justify-content: center;">
+    <div style="text-align: center;">
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" alt="Soltel Logo" style="height: 90px; margin-bottom: 40px;">
+        <p style="color: var(--soltel-red); font-weight: 700; letter-spacing: 6px; margin-bottom: 15px; text-transform: uppercase;">Curso Práctico Intensivo — 5 Horas</p>
+        <h1 style="font-size: 64px; letter-spacing: -1px; line-height: 1.2;">MASTERCLASS DE ARQUITECTURA,<br><span style="color: var(--soltel-red);">RENDIMIENTO Y RETOS AVANZADOS</span></h1>
+        <p style="margin-top: 30px; font-size: 22px;">Módulo 2: Desde el árbol de renderizado hasta la inyección de dependencias</p>
+        <div style="width: 150px; height: 6px; background: var(--soltel-red); margin: 40px auto 0;"></div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide2">
+    <div class="slide-header">
+        <h2 class="slide-title">Teoría A: Árbol de Renderizado y Layouts Responsivos</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="keyword">import</span> 'package:flutter/material.dart';
+
+<span class="comment">// Analizamos cómo Flutter calcula las dimensiones.</span>
+<span class="comment">// Regla de oro: "Constraints go down. Sizes go up. Parent sets position."</span>
+<span class="keyword">class</span> <span class="type">ResponsiveDashboard</span> <span class="keyword">extends</span> <span class="type">StatelessWidget</span> {
+  <span class="keyword">const</span> <span class="type">ResponsiveDashboard</span>({<span class="type">Key</span>? key}) : <span class="keyword">super</span>(key: key);
+
+  <span class="annotation">@override</span>
+  <span class="type">Widget</span> build(<span class="type">BuildContext</span> context) {
+    <span class="comment">// SafeArea evita intromisiones de los "notches" o barras de estado nativas</span>
+    <span class="keyword">return</span> <span class="type">Scaffold</span>(
+      backgroundColor: <span class="type">Theme</span>.of(context).colorScheme.background,
+      body: <span class="type">SafeArea</span>(
+        <span class="comment">// LayoutBuilder delega la construcción basándose en las restricciones del padre</span>
+        child: <span class="type">LayoutBuilder</span>(
+          builder: (<span class="type">BuildContext</span> context, <span class="type">BoxConstraints</span> constraints) {
+            <span class="comment">// Comprobamos el ancho máximo disponible para decidir la arquitectura visual</span>
+            <span class="keyword">if</span> (constraints.maxWidth &gt; <span class="number">900</span>) {
+              <span class="keyword">return</span> _buildDesktopLayout(constraints);
+            } <span class="keyword">else</span> <span class="keyword">if</span> (constraints.maxWidth &gt; <span class="number">600</span>) {
+              <span class="keyword">return</span> _buildTabletLayout(constraints);
+            } <span class="keyword">else</span> {
+              <span class="keyword">return</span> _buildMobileLayout(constraints);
+            }
+          },
+        ),
+      ),
+    );
+  }
+
+  <span class="type">Widget</span> _buildMobileLayout(<span class="type">BoxConstraints</span> constraints) {
+    <span class="comment">// ListView.separated es óptimo para listas con divisores</span>
+    <span class="keyword">return</span> <span class="type">ListView</span>.separated(
+      itemCount: <span class="number">20</span>,
+      separatorBuilder: (_, __) =&gt; <span class="keyword">const</span> <span class="type">Divider</span>(),
+      itemBuilder: (context, index) {
+        <span class="keyword">return</span> <span class="type">Container</span>(
+          <span class="comment">// El contenedor hijo respeta las restricciones impuestas por la lista</span>
+          height: <span class="number">100</span>,
+          alignment: <span class="type">Alignment</span>.center,
+          color: <span class="type">Colors</span>.blueGrey[<span class="number">100</span>],
+          child: <span class="type">Text</span>(<span class="string">'Elemento móvil $index'</span>),
+        );
+      },
+    );
+  }
+
+  <span class="type">Widget</span> _buildTabletLayout(<span class="type">BoxConstraints</span> constraints) {
+    <span class="comment">// Implementación pendiente para el laboratorio</span>
+    <span class="keyword">return</span> <span class="keyword">const</span> <span class="type">Center</span>(child: <span class="type">Text</span>(<span class="string">'Vista de Tablet'</span>));
+  }
+
+  <span class="type">Widget</span> _buildDesktopLayout(<span class="type">BoxConstraints</span> constraints) {
+    <span class="comment">// Implementación pendiente para el laboratorio</span>
+    <span class="keyword">return</span> <span class="keyword">const</span> <span class="type">Center</span>(child: <span class="type">Text</span>(<span class="string">'Vista de Escritorio'</span>));
+  }
+}</div>
+            <div class="explanation-box">
+                <h3>Mecánicas de Layout</h3>
+                <h4>1. El paradigma de restricciones (Constraints)</h4>
+                <ul>
+                    <li>El motor de renderizado de Flutter funciona bajo una regla estricta: el widget padre transfiere <strong>restricciones</strong> (ancho/alto máximo y mínimo) a sus hijos.</li>
+                    <li>El widget hijo decide su <strong>tamaño</strong> basándose en esas restricciones y se lo comunica al padre.</li>
+                    <li>El padre finalmente establece la <strong>posición</strong> geométrica del hijo en las coordenadas X e Y.</li>
+                </ul>
+                <h4>2. SafeArea</h4>
+                <ul>
+                    <li>Inyecta padding dinámico para evitar que la interfaz sea obstruida por elementos del hardware del dispositivo, como la cámara frontal (notch) o la barra indicadora de navegación de iOS/Android.</li>
+                </ul>
+                <h4>3. LayoutBuilder vs MediaQuery</h4>
+                <ul>
+                    <li><code>MediaQuery.of(context).size</code> devuelve el tamaño físico total de la pantalla del dispositivo. Requiere redibujar todo si el tamaño de la ventana cambia.</li>
+                    <li><code>LayoutBuilder</code> proporciona las dimensiones del contenedor padre directo. Es la herramienta principal para crear componentes modulares y verdaderamente responsivos que ignoran el tamaño global de la pantalla.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide3">
+    <div class="slide-header">
+        <h2 class="slide-title">Laboratorio Bloque A: Maestría en Layouts Responsivos</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="comment">// RETO 1: Adaptación a Tablet mediante GridView</span>
+<span class="comment">// OBJETIVO: Optimizar el espacio visual cuando hay más de 600px de ancho.</span>
+<span class="comment">// TODO: En el método '_buildTabletLayout', reemplaza el Center por un</span>
+<span class="comment">// GridView.builder. Utiliza 'gridDelegate: SliverGridDelegateWithFixedCrossAxisCount'</span>
+<span class="comment">// configurando 'crossAxisCount: 2' para mostrar dos columnas, y añade</span>
+<span class="comment">// un 'crossAxisSpacing' y 'mainAxisSpacing' de 16.0.</span>
+
+<span class="comment">// RETO 2: Implementación de Menú Lateral (Desktop)</span>
+<span class="comment">// OBJETIVO: Crear una vista dividida (Split-View) para resoluciones mayores a 900px.</span>
+<span class="comment">// TODO: En el método '_buildDesktopLayout', retorna un widget 'Row'.</span>
+<span class="comment">// El primer hijo de la fila debe ser un contenedor con ancho fijo (ej. 250px)</span>
+<span class="comment">// simulando un menú lateral. El segundo hijo debe ser el contenido principal,</span>
+<span class="comment">// pero ATENCIÓN: debes envolverlo en un widget 'Expanded' para evitar errores</span>
+<span class="comment">// de overflow en el eje horizontal.</span>
+
+<span class="comment">// RETO 3: Restricciones Forzadas (ConstrainedBox)</span>
+<span class="comment">// OBJETIVO: Evitar que elementos específicos crezcan desproporcionadamente.</span>
+<span class="comment">// TODO: Dentro de los elementos generados por tu GridView del Reto 1,</span>
+<span class="comment">// envuelve el contenido textual en un 'ConstrainedBox' garantizando que</span>
+<span class="comment">// el 'minHeight' sea de 80 píxeles, sin importar el texto introducido.</span></div>
+            <div class="explanation-box">
+                <h3>Guía Técnica de Resolución</h3>
+                <ul>
+                    <li><strong>Para el Reto 1:</strong> <code>GridView.builder</code> es la alternativa bidimensional a <code>ListView.builder</code>. El parámetro <code>gridDelegate</code> es obligatorio porque es el motor matemático que calcula cómo se distribuyen los elementos en la cuadrícula antes de renderizarlos.</li>
+                    <li><strong>Para el Reto 2:</strong> El widget <code>Row</code> expone restricciones de tipo infinito (unbounded) en el eje horizontal a sus hijos. Si intentas renderizar una lista dentro de una <code>Row</code> sin envolverla en un <code>Expanded</code> o <code>Flexible</code>, Flutter lanzará una excepción severa de layout, ya que la lista intentará crecer infinitamente.</li>
+                    <li><strong>Para el Reto 3:</strong> <code>ConstrainedBox</code> es tu mejor aliado para forzar el comportamiento de widgets que por defecto se encogen para adaptarse a su hijo (shrink-wrap) o se expanden para ocupar todo el espacio.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide4">
+    <div class="slide-header">
+        <h2 class="slide-title">Teoría B: Ciclo de Vida Profundo y Controladores</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="keyword">import</span> 'package:flutter/material.dart';
+
+<span class="keyword">class</span> <span class="type">AdvancedLifecycleWidget</span> <span class="keyword">extends</span> <span class="type">StatefulWidget</span> {
+  <span class="keyword">final</span> <span class="type">String</span> endpoint;
+  <span class="keyword">const</span> <span class="type">AdvancedLifecycleWidget</span>({<span class="type">Key</span>? key, <span class="keyword">required</span> <span class="keyword">this</span>.endpoint}) : <span class="keyword">super</span>(key: key);
+
+  <span class="annotation">@override</span>
+  <span class="type">State</span>&lt;<span class="type">AdvancedLifecycleWidget</span>&gt; createState() =&gt; <span class="type">_AdvancedLifecycleWidgetState</span>();
+}
+
+<span class="keyword">class</span> <span class="type">_AdvancedLifecycleWidgetState</span> <span class="keyword">extends</span> <span class="type">State</span>&lt;<span class="type">AdvancedLifecycleWidget</span>&gt; {
+  <span class="keyword">late</span> <span class="type">ScrollController</span> _scrollController;
+  <span class="type">double</span> _scrollOffset = <span class="number">0.0</span>;
+
+  <span class="annotation">@override</span>
+  <span class="keyword">void</span> initState() {
+    <span class="keyword">super</span>.initState();
+    <span class="comment">// 1. Inicialización. El widget se añade al árbol. NO hay contexto seguro aquí.</span>
+    _scrollController = <span class="type">ScrollController</span>();
+    _scrollController.addListener(_scrollListener);
+  }
+
+  <span class="annotation">@override</span>
+  <span class="keyword">void</span> didChangeDependencies() {
+    <span class="keyword">super</span>.didChangeDependencies();
+    <span class="comment">// 2. Se llama inmediatamente después de initState, o cuando un InheritedWidget</span>
+    <span class="comment">// del cual dependemos (como Theme o MediaQuery) cambia. Contexto seguro.</span>
+  }
+
+  <span class="annotation">@override</span>
+  <span class="keyword">void</span> didUpdateWidget(<span class="keyword">covariant</span> <span class="type">AdvancedLifecycleWidget</span> oldWidget) {
+    <span class="keyword">super</span>.didUpdateWidget(oldWidget);
+    <span class="comment">// 3. Se ejecuta si el padre se reconstruye y pasa nuevas propiedades.</span>
+    <span class="keyword">if</span> (oldWidget.endpoint != widget.endpoint) {
+      <span class="comment">// Lógica de reactivación, ej: cancelar peticiones HTTP antiguas y lanzar nuevas</span>
+    }
+  }
+
+  <span class="keyword">void</span> _scrollListener() {
+    <span class="comment">// Notifica al motor para redibujar basándose en la posición del scroll</span>
+    setState(() {
+      _scrollOffset = _scrollController.offset;
+    });
+  }
+
+  <span class="annotation">@override</span>
+  <span class="keyword">void</span> dispose() {
+    <span class="comment">// 4. Destrucción. Liberación explícita en memoria de los listeners para evitar fugas.</span>
+    _scrollController.removeListener(_scrollListener);
+    _scrollController.dispose();
+    <span class="keyword">super</span>.dispose();
+  }
+
+  <span class="annotation">@override</span>
+  <span class="type">Widget</span> build(<span class="type">BuildContext</span> context) {
+    <span class="comment">// 5. Reconstrucción constante. Jamás realizar operaciones pesadas o asíncronas aquí.</span>
+    <span class="keyword">return</span> <span class="type">Scaffold</span>(
+      appBar: <span class="type">AppBar</span>(title: <span class="type">Text</span>(<span class="string">'Offset: ${_scrollOffset.toStringAsFixed(1)}'</span>)),
+      body: <span class="type">ListView</span>.builder(
+        controller: _scrollController,
+        itemCount: <span class="number">100</span>,
+        itemBuilder: (context, index) =&gt; <span class="type">ListTile</span>(title: <span class="type">Text</span>(<span class="string">'Ítem $index'</span>)),
+      ),
+    );
+  }
+}</div>
+            <div class="explanation-box">
+                <h3>Anatomía de StatefulWidget</h3>
+                <h4>La separación de Widget y State</h4>
+                <ul>
+                    <li>La clase que hereda de <code>StatefulWidget</code> es inmutable y se recrea constantemente. La clase que hereda de <code>State</code> es persistente en la memoria a lo largo del tiempo.</li>
+                </ul>
+                <h4>Métodos Críticos</h4>
+                <ul>
+                    <li><strong>initState:</strong> Primer método llamado. Ideal para inicializar variables, animaciones o Controladores. No debes usar <code>context.dependOnInheritedWidgetOfExactType</code> aquí.</li>
+                    <li><strong>didChangeDependencies:</strong> Se llama cuando cambian las dependencias externas inyectadas, como el idioma o el tema del sistema operativo.</li>
+                    <li><strong>didUpdateWidget:</strong> Crucial para comparar el estado antiguo (<code>oldWidget</code>) con el nuevo (<code>widget</code>) si el padre alteró los argumentos de entrada.</li>
+                    <li><strong>Fugas de Memoria (Memory Leaks):</strong> Si inicializas un controlador en <code>initState</code> y olvidas llamar a su método <code>dispose()</code> en la sobreescritura de <code>dispose</code> del estado, los listeners seguirán activos en RAM de forma huérfana cuando la pantalla se cierre.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide5">
+    <div class="slide-header">
+        <h2 class="slide-title">Laboratorio Bloque B: Controladores y Mutaciones</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="comment">// RETO 4: Animación basada en Scroll (Parallax Básico)</span>
+<span class="comment">// OBJETIVO: Escuchar un controlador físico y mutar la interfaz en tiempo real.</span>
+<span class="comment">// TODO: Declara una variable booleana '_isScrolled' en el estado inicializada en false.</span>
+<span class="comment">// Dentro de tu '_scrollListener', implementa la siguiente lógica condicional:</span>
+<span class="comment">// Si el offset supera los 100 píxeles, cambia '_isScrolled' a true y usa setState.</span>
+<span class="comment">// Si desciende de 100, pásalo a false.</span>
+<span class="comment">// Finalmente, usa un operador ternario en el color de tu AppBar para</span>
+<span class="comment">// que cambie dinámicamente entre azul y rojo basándose en esa variable.</span>
+
+<span class="comment">// RETO 5: Formularios y FocusNodes</span>
+<span class="comment">// OBJETIVO: Entender el ciclo de vida de otros componentes nativos.</span>
+<span class="comment">// TODO: Crea una variable '_textController' de tipo TextEditingController</span>
+<span class="comment">// y un '_focusNode' de tipo FocusNode.</span>
+<span class="comment">// Inyéctalos en un widget 'TextField' en la cabecera de la lista.</span>
+<span class="comment">// RETO CRÍTICO: Debes asegurar que ambos controladores sean instanciados en</span>
+<span class="comment">// 'initState' y completamente destruidos en 'dispose'.</span>
+
+<span class="comment">// RETO 6: Reacción a cambios del Padre</span>
+<span class="comment">// OBJETIVO: Dominar didUpdateWidget.</span>
+<span class="comment">// TODO: Supón que el widget padre pasa un String llamado 'searchQuery'.</span>
+<span class="comment">// Sobreescribe didUpdateWidget. Si el oldWidget.searchQuery es diferente al</span>
+<span class="comment">// actual widget.searchQuery, reinicia el '_scrollController' llamando a</span>
+<span class="comment">// '_scrollController.jumpTo(0.0)'.</span></div>
+            <div class="explanation-box">
+                <h3>Guía Técnica de Resolución</h3>
+                <ul>
+                    <li><strong>Para el Reto 4:</strong> Evalúa añadir una condición extra antes de llamar a <code>setState</code>. Por ejemplo: <code>if (_isScrolled != newValue) { setState... }</code>. Llamar a <code>setState</code> de forma indiscriminada en cada píxel del scroll saturará el hilo principal (Main Thread) de procesamiento, reduciendo los fotogramas por segundo (FPS).</li>
+                    <li><strong>Para el Reto 5:</strong> Todo objeto que retenga conexiones a recursos del sistema, como el teclado virtual del sistema operativo (que es lo que gestiona un <code>FocusNode</code>), requiere liberación de memoria. El recolector de basura (Garbage Collector) de Dart no puede destruir conexiones nativas automáticamente.</li>
+                    <li><strong>Para el Reto 6:</strong> El uso de <code>widget.propiedad</code> permite acceder a los parámetros pasados desde la clase StatefulWidget hacia la clase State. Es la vía de comunicación unidireccional estándar en Flutter.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide6">
+    <div class="slide-header">
+        <h2 class="slide-title">Teoría C: Máximo Rendimiento con Slivers</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="keyword">import</span> 'package:flutter/material.dart';
+
+<span class="keyword">class</span> <span class="type">SliverArchitectureView</span> <span class="keyword">extends</span> <span class="type">StatelessWidget</span> {
+  <span class="keyword">const</span> <span class="type">SliverArchitectureView</span>({<span class="type">Key</span>? key}) : <span class="keyword">super</span>(key: key);
+
+  <span class="annotation">@override</span>
+  <span class="type">Widget</span> build(<span class="type">BuildContext</span> context) {
+    <span class="comment">// CustomScrollView delega el renderizado directo al motor centralizado</span>
+    <span class="keyword">return</span> <span class="type">Scaffold</span>(
+      body: <span class="type">CustomScrollView</span>(
+        slivers: &lt;<span class="type">Widget</span>&gt;[
+          <span class="comment">// SliverAppBar: Cabecera que reacciona a la física del scroll</span>
+          <span class="type">SliverAppBar</span>(
+            pinned: <span class="keyword">true</span>,      <span class="comment">// Se mantiene fija al llegar arriba</span>
+            stretch: <span class="keyword">true</span>,     <span class="comment">// Permite sobre-estiramiento elástico (iOS)</span>
+            expandedHeight: <span class="number">250.0</span>,
+            flexibleSpace: <span class="type">FlexibleSpaceBar</span>(
+              title: <span class="keyword">const</span> <span class="type">Text</span>(<span class="string">'Slivers Corporativos'</span>),
+              background: <span class="type">Image</span>.network(
+                <span class="string">'https://picsum.photos/800/400'</span>,
+                fit: <span class="type">BoxFit</span>.cover,
+              ),
+            ),
+          ),
+          
+          <span class="comment">// Todo widget normal debe ser adaptado al ecosistema Sliver</span>
+          <span class="type">SliverToBoxAdapter</span>(
+            child: <span class="type">Padding</span>(
+              padding: <span class="keyword">const</span> <span class="type">EdgeInsets</span>.all(<span class="number">16.0</span>),
+              child: <span class="type">Text</span>(
+                <span class="string">'Sección de Análisis de Datos'</span>,
+                style: <span class="type">Theme</span>.of(context).textTheme.titleLarge,
+              ),
+            ),
+          ),
+
+          <span class="comment">// Equivalente Sliver a ListView.builder</span>
+          <span class="type">SliverList</span>(
+            delegate: <span class="type">SliverChildBuilderDelegate</span>(
+              (<span class="type">BuildContext</span> context, <span class="type">int</span> index) {
+                <span class="keyword">return</span> <span class="type">Card</span>(
+                  margin: <span class="keyword">const</span> <span class="type">EdgeInsets</span>.symmetric(horizontal: <span class="number">16.0</span>, vertical: <span class="number">8.0</span>),
+                  child: <span class="type">ListTile</span>(title: <span class="type">Text</span>(<span class="string">'Registro de operaciones #$index'</span>)),
+                );
+              },
+              childCount: <span class="number">15</span>, <span class="comment">// Renderizado bajo demanda lazy-loading</span>
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}</div>
+            <div class="explanation-box">
+                <h3>El Protocolo Sliver</h3>
+                <h4>¿Por qué usar Slivers?</h4>
+                <ul>
+                    <li>Los widgets estándar operan bajo el sistema de <strong>RenderBox</strong>, que asume geometrías cartesianas en 2D.</li>
+                    <li>Los elementos con scroll infinito o complejo en Flutter no usan el protocolo RenderBox estándar. Usan <strong>RenderSliver</strong>. Un Sliver es una porción del área desplazable que evalúa posiciones, direcciones y recortes (clipping) relativos a un viewport.</li>
+                </ul>
+                <h4>Desterrando el Anti-Patrón</h4>
+                <ul>
+                    <li>Anidar un <code>ListView</code> dentro de otro <code>ListView</code> requiere envolver el interno con restricciones severas, perdiendo la eficiencia de memoria. <code>CustomScrollView</code> es la solución arquitectónica: agrupa múltiples componentes desplazables bajo un único controlador físico y plano de renderizado.</li>
+                </ul>
+                <h4>Adaptadores</h4>
+                <ul>
+                    <li>Un <code>Container</code> no puede existir directamente dentro del array <code>slivers: []</code>. Se requiere obligatoriamente el puente <code>SliverToBoxAdapter</code> para transformar restricciones de caja en restricciones lineales desplazables.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide7">
+    <div class="slide-header">
+        <h2 class="slide-title">Laboratorio Bloque C: Complejidad en Viewports</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="comment">// RETO 7: Configuración Dinámica de Cabecera</span>
+<span class="comment">// OBJETIVO: Personalizar la física del SliverAppBar.</span>
+<span class="comment">// TODO: Modifica el 'SliverAppBar' base. Cambia 'pinned: true' por 'floating: true'.</span>
+<span class="comment">// Haz scroll hacia abajo en el dispositivo y luego un pequeño gesto hacia arriba.</span>
+<span class="comment">// Analiza y documenta internamente cómo difiere este comportamiento.</span>
+<span class="comment">// Combina 'floating: true' con 'snap: true' y experimenta el resultado.</span>
+
+<span class="comment">// RETO 8: Inyección de una Malla de Datos (SliverGrid)</span>
+<span class="comment">// OBJETIVO: Combinar arquitecturas en un mismo lienzo de scroll.</span>
+<span class="comment">// TODO: Debajo del 'SliverList' en el código base, inyecta un componente</span>
+<span class="comment">// 'SliverGrid'. Utiliza 'SliverGridDelegateWithFixedCrossAxisCount'</span>
+<span class="comment">// configurando 3 columnas ('crossAxisCount: 3').</span>
+<span class="comment">// En su 'delegate', usa un 'SliverChildBuilderDelegate' para generar 30</span>
+<span class="comment">// elementos que muestren íconos o imágenes de red (NetworkImage).</span>
+
+<span class="comment">// RETO 9: SliverPadding Arquitectónico</span>
+<span class="comment">// OBJETIVO: Espaciar de forma óptima sin romper el modelo RenderSliver.</span>
+<span class="comment">// TODO: Envolver un widget tipo Sliver dentro de un 'Padding' clásico generará</span>
+<span class="comment">// una excepción de compilación "A RenderRepaintBoundary expected a child of type RenderBox".</span>
+<span class="comment">// Envuelve el 'SliverGrid' que creaste en el Reto 8 dentro de un widget</span>
+<span class="comment">// específico llamado 'SliverPadding' e inyecta 20 píxeles asimétricos.</span></div>
+            <div class="explanation-box">
+                <h3>Guía Técnica de Resolución</h3>
+                <ul>
+                    <li><strong>Para el Reto 7:</strong> La propiedad <code>floating</code> permite que la cabecera reaparezca inmediatamente en cuanto el usuario invierte la dirección del scroll, sin tener que subir hasta la posición 0 del documento. <code>snap</code> fuerza que la animación de la cabecera se complete sin posiciones intermedias (se oculta entera o se muestra entera).</li>
+                    <li><strong>Para el Reto 8:</strong> Combinar <code>SliverList</code> y <code>SliverGrid</code> en el mismo viewport es el estándar de la industria para generar interfaces como los perfiles de redes sociales o catálogos de tiendas, operando ambos bajo el mismo esfuerzo en memoria.</li>
+                    <li><strong>Para el Reto 9:</strong> El árbol de nodos de Flutter es fuertemente tipado en cuanto a renderizado. Los Slivers solo aceptan padres que hereden de la jerarquía de Slives, como <code>SliverPadding</code> o <code>SliverSafeArea</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide8">
+    <div class="slide-header">
+        <h2 class="slide-title">Teoría D: Arquitectura Limpia y Programación Reactiva</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="keyword">import</span> 'package:flutter/material.dart';
+
+<span class="comment">// 1. CAPA DE LÓGICA DE NEGOCIO (Controlador)</span>
+<span class="comment">// Desacoplamos la mutación de los datos del árbol de widgets.</span>
+<span class="keyword">class</span> <span class="type">AppController</span> {
+  <span class="comment">// ValueNotifier expone un flujo reactivo basado en un tipo de dato genérico</span>
+  <span class="keyword">final</span> <span class="type">ValueNotifier</span>&lt;<span class="type">int</span>&gt; contadorEstado = <span class="type">ValueNotifier</span>&lt;<span class="type">int</span>&gt;(<span class="number">0</span>);
+
+  <span class="keyword">void</span> incrementar() {
+    <span class="comment">// Modificar el valor interno notifica automáticamente a los oyentes</span>
+    contadorEstado.value++;
+  }
+
+  <span class="keyword">void</span> dispose() {
+    <span class="comment">// Los Notificadores deben ser destruidos para liberar RAM</span>
+    contadorEstado.dispose();
+  }
+}
+
+<span class="comment">// 2. CAPA DE PRESENTACIÓN (UI)</span>
+<span class="comment">// Ahora podemos usar un StatelessWidget, aumentando drásticamente la eficiencia.</span>
+<span class="keyword">class</span> <span class="type">ReactiveArchitectureView</span> <span class="keyword">extends</span> <span class="type">StatelessWidget</span> {
+  <span class="comment">// Inyección de dependencias mediante constructor</span>
+  <span class="keyword">final</span> <span class="type">AppController</span> controller;
+  
+  <span class="keyword">const</span> <span class="type">ReactiveArchitectureView</span>({<span class="type">Key</span>? key, <span class="keyword">required</span> <span class="keyword">this</span>.controller}) : <span class="keyword">super</span>(key: key);
+
+  <span class="annotation">@override</span>
+  <span class="type">Widget</span> build(<span class="type">BuildContext</span> context) {
+    <span class="keyword">return</span> <span class="type">Scaffold</span>(
+      appBar: <span class="type">AppBar</span>(title: <span class="keyword">const</span> <span class="type">Text</span>(<span class="string">'Estado Desacoplado'</span>)),
+      body: <span class="type">Center</span>(
+        <span class="comment">// ValueListenableBuilder es el puente de suscripción.</span>
+        <span class="comment">// Solo reconstruye el sub-árbol interno cuando el controlador emite,</span>
+        <span class="comment">// evitando reconstruir el Scaffold y la AppBar por completo.</span>
+        child: <span class="type">ValueListenableBuilder</span>&lt;<span class="type">int</span>&gt;(
+          valueListenable: controller.contadorEstado,
+          builder: (<span class="type">BuildContext</span> context, <span class="type">int</span> valorActual, <span class="type">Widget</span>? child) {
+            <span class="keyword">return</span> <span class="type">Text</span>(
+              <span class="string">'Valor centralizado: $valorActual'</span>,
+              style: <span class="type">Theme</span>.of(context).textTheme.headlineMedium,
+            );
+          },
+        ),
+      ),
+      floatingActionButton: <span class="type">FloatingActionButton</span>(
+        <span class="comment">// Llamada directa a los métodos del controlador sin acoplamiento local</span>
+        onPressed: controller.incrementar,
+        child: <span class="keyword">const</span> <span class="type">Icon</span>(<span class="type">Icons</span>.add),
+      ),
+    );
+  }
+}</div>
+            <div class="explanation-box">
+                <h3>Arquitectura Desacoplada Nivel Producción</h3>
+                <h4>El límite del StatefulWidget</h4>
+                <ul>
+                    <li>Invocar <code>setState()</code> en la raíz de una pantalla compleja destruye y reevalúa miles de nodos de renderizado por cada mutación pequeña de datos. Esto es un anti-patrón de escalabilidad arquitectónica.</li>
+                </ul>
+                <h4>ValueNotifier y Listenable</h4>
+                <ul>
+                    <li>El ecosistema nativo de Flutter ofrece clases como <code>ValueNotifier</code> o <code>ChangeNotifier</code>. Estas implementan el patrón de diseño Observador (Observer Pattern).</li>
+                    <li>La lógica matemática, peticiones HTTP, o modificaciones de la base de datos se encapsulan en clases puras de Dart (Controladores).</li>
+                </ul>
+                <h4>Renderizado Quirúrgico</h4>
+                <ul>
+                    <li>Un <code>ValueListenableBuilder</code> actúa como un escudo. Escucha los cambios del controlador y fuerza el renderizado <strong>exclusivamente</strong> de los elementos que envuelve, aislando la regeneración visual al mínimo necesario, y garantizando los fluidos 60 o 120 FPS de las aplicaciones compiladas nativamente.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide9">
+    <div class="slide-header">
+        <h2 class="slide-title">Laboratorio Bloque D: Refactorización a Arquitectura</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block"><span class="comment">// RETO FINAL INTENSIVO: Extracción de Lógica y Clean Architecture</span>
+<span class="comment">// OBJETIVO: Convertir el código espagueti de un StatefulWidget antiguo a este</span>
+<span class="comment">// modelo altamente optimizado.</span>
+
+<span class="comment">// PASO 1: Creación del Modelo/Controlador</span>
+<span class="comment">// TODO: Crea una clase 'AuthSessionController'. Define dentro un 'ValueNotifier&lt;bool&gt;'</span>
+<span class="comment">// llamado 'isLogged' inicializado en false. Crea métodos públicos llamados 'login()'</span>
+<span class="comment">// y 'logout()' que alteren el valor interno simulando autenticación.</span>
+
+<span class="comment">// PASO 2: La Vista Tonta (Dumb UI)</span>
+<span class="comment">// TODO: Crea un 'StatelessWidget' principal llamado 'SessionView'. Este widget debe</span>
+<span class="comment">// recibir tu 'AuthSessionController' por constructor.</span>
+
+<span class="comment">// PASO 3: Renderizado Condicional Desacoplado</span>
+<span class="comment">// TODO: En el body de tu 'SessionView', implementa un 'ValueListenableBuilder'.</span>
+<span class="comment">// Evalúa el valor inyectado: Si el valor 'isLogged' es falso, retorna un widget</span>
+<span class="comment">// con dos 'TextField' (Usuario y Contraseña) y un botón de "Entrar" que llame al </span>
+<span class="comment">// método 'login()' de tu controlador.</span>
+<span class="comment">// Si el valor es verdadero, retorna un widget mostrando los datos del usuario </span>
+<span class="comment">// y un botón para 'logout()'.</span>
+
+<span class="comment">// PASO 4 (Avanzado): Optimización del Builder.</span>
+<span class="comment">// TODO: Documenta el uso del parámetro opcional 'child' dentro del</span>
+<span class="comment">// 'ValueListenableBuilder'. Úsalo para pasar un logotipo de la empresa que NO debe</span>
+<span class="comment">// repintarse nunca durante los cambios de estado del login.</span></div>
+            <div class="explanation-box">
+                <h3>Guía de Resolución Avanzada</h3>
+                <ul>
+                    <li><strong>Para el Paso 1:</strong> La extracción de la lógica a clases Dart permite realizar Testing Unitario (Unit Testing) sin requerir el motor gráfico de Flutter, lo que disminuye tiempos de compilación.</li>
+                    <li><strong>Para el Paso 3:</strong> Este patrón fomenta que las interfaces de usuario se conviertan únicamente en el reflejo reaccionario de una máquina de estados centralizada. Si el controlador muta, la vista se somete automáticamente.</li>
+                    <li><strong>Para el Paso 4 (Optimización Extrema):</strong> El argumento <code>child</code> que recibe el método <code>builder</code> sirve para cachear widgets costosos de calcular. El motor inyecta el widget precompilado permitiendo que partes pesadas sobrevivan la reconstrucción reactiva ilesas.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>

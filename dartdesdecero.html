@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dart Desde Cero - Soltel</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+/* IDENTIDAD VISUAL SOLTEL */
+:root {
+  --soltel-navy: #1a2039;
+  --soltel-red: #eb4b4b;
+  --soltel-white: #ffffff;
+  --soltel-gray: #f0f1f5;
+  --text-main: #ffffff;
+  --text-sub: #cbd5e1;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background-color: #0f172a;
+  display: grid;
+  gap: 20px;
+  grid-template-columns: 1fr;
+  margin: 0;
+  min-height: 100vh;
+  padding: 20px 0;
+  place-items: center;
+}
+
+.slide-container {
+  align-items: center;
+  background-color: var(--soltel-navy);
+  border-radius: 0;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  display: flex;
+  flex-direction: column;
+  font-family: 'Urbanist', sans-serif;
+  height: 720px;
+  justify-content: flex-start; /* Cambiado para alinear desde arriba */
+  padding: 50px 60px;
+  position: relative;
+  width: 1280px;
+}
+
+/* ENCABEZADO PROTEGIDO CONTRA SUPERPOSICIONES */
+.slide-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  margin-bottom: 35px;
+  border-left: 8px solid var(--soltel-red);
+  padding-left: 25px;
+}
+
+.slide-title {
+  font-size: 38px;
+  font-weight: 700;
+  color: var(--soltel-white);
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+  padding-right: 20px; /* Espacio de seguridad */
+}
+
+.slide-logo-right {
+  height: 40px;
+  flex-shrink: 0; /* Evita que el logo se deforme o encoja */
+}
+
+/* TRAMA DE PUNTOS SOLTEL */
+.slide-container::before {
+  content: '';
+  position: absolute;
+  bottom: -100px;
+  right: -50px;
+  width: 600px;
+  height: 400px;
+  background-image: radial-gradient(var(--soltel-red) 2px, transparent 2px);
+  background-size: 20px 20px;
+  opacity: 0.15;
+  transform: rotate(-15deg);
+  z-index: 0;
+}
+
+.slide-container > * { position: relative; z-index: 1; }
+
+/* TIPOGRAFÍA */
+h1, h3 { color: var(--soltel-white); font-weight: 700; margin: 0; }
+p, li { color: var(--text-sub); font-size: 20px; line-height: 1.5; }
+
+/* EDITOR DE CÓDIGO */
+.code-block {
+  font-family: 'JetBrains Mono', monospace;
+  background: #0b0f19;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #e2e8f0;
+  font-size: 17px;
+  width: 100%;
+  line-height: 1.5;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.5);
+}
+
+/* SINTAXIS HIGHLIGHT */
+.keyword { color: #f472b6; font-weight: 600; }
+.type { color: #38bdf8; }
+.string { color: #fbbf24; }
+.comment { color: #64748b; font-style: italic; }
+.number { color: #a78bfa; }
+
+/* LAYOUTS */
+.content-area { display: flex; flex-direction: column; flex-grow: 1; justify-content: center; width: 100%; }
+.two-column { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 40px; width: 100%; align-items: start; }
+.explanation-box { background: rgba(255, 255, 255, 0.03); padding: 25px; border-radius: 8px; border-left: 4px solid var(--soltel-red); }
+.explanation-box h3 { font-size: 24px; margin-bottom: 15px; color: var(--soltel-white); }
+.explanation-box ul { padding-left: 20px; margin: 0; }
+.explanation-box li { margin-bottom: 10px; font-size: 18px; }
+    </style>
+</head>
+<body>
+
+<div class="slide-container" id="slide1" style="justify-content: center;">
+    <div style="text-align: center;">
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" alt="Soltel Logo" style="height: 80px; margin-bottom: 40px;">
+        <p style="color: var(--soltel-red); font-weight: 700; letter-spacing: 6px; margin-bottom: 15px; text-transform: uppercase;">Curso Práctico</p>
+        <h1 style="font-size: 64px; letter-spacing: -1px;">DART DESDE CERO:<br><span style="color: var(--soltel-red);">CÓDIGO VIVO</span></h1>
+        <div style="width: 120px; height: 6px; background: var(--soltel-red); margin: 30px auto 0;"></div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide2">
+    <div class="slide-header">
+        <h2 class="slide-title">El Origen: Función Main</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="keyword">void</span> main() {<br>
+                &nbsp;&nbsp;<span class="comment">// Aquí inicia la ejecución de la app</span><br>
+                &nbsp;&nbsp;print(<span class="string">'Hola Mundo desde Soltel'</span>);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Estructura Inicial</h3>
+                <ul>
+                    <li><code>void</code>: Indica que la función no retorna ningún valor.</li>
+                    <li><code>main()</code>: Es el punto de acceso obligatorio para el compilador.</li>
+                    <li><code>print()</code>: Muestra cadenas de texto en la consola de depuración.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide3">
+    <div class="slide-header">
+        <h2 class="slide-title">Variables y Tipos de Datos</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="type">String</span> empresa = <span class="string">'Soltel'</span>;<br>
+                <span class="type">int</span> empleados = <span class="number">200</span>;<br>
+                <span class="type">double</span> version = <span class="number">3.5</span>;<br>
+                <span class="type">bool</span> esMultiplataforma = <span class="keyword">true</span>;<br><br>
+                <span class="comment">// Inferencia automática de tipos</span><br>
+                <span class="keyword">var</span> proyecto = <span class="string">'Flutter App'</span>; 
+            </div>
+            <div class="explanation-box">
+                <h3>Tipado Fuerte</h3>
+                <ul>
+                    <li>Tipos explícitos: <code>String</code>, <code>int</code>, <code>double</code> y <code>bool</code>.</li>
+                    <li>Uso de <code>var</code>: Dart deduce el tipo automáticamente en la asignación inicial y lo mantiene fijo.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide4">
+    <div class="slide-header">
+        <h2 class="slide-title">Interpolación de Strings</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="keyword">void</span> main() {<br>
+                &nbsp;&nbsp;<span class="type">String</span> tecnologia = <span class="string">'Dart'</span>;<br>
+                &nbsp;&nbsp;<span class="type">int</span> nivel = <span class="number">1</span>;<br><br>
+                &nbsp;&nbsp;<span class="comment">// Inserción directa de variables</span><br>
+                &nbsp;&nbsp;print(<span class="string">'Curso de $tecnologia - Nivel $nivel'</span>);<br><br>
+                &nbsp;&nbsp;<span class="comment">// Evaluación de expresiones complejas</span><br>
+                &nbsp;&nbsp;print(<span class="string">'Siguiente nivel: ${nivel + 1}'</span>);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Formateo Eficiente</h3>
+                <ul>
+                    <li>El símbolo <code>$</code> incrusta variables directamente sin usar concatenaciones complejas (<code>+</code>).</li>
+                    <li>Las llaves <code>${}</code> evalúan operaciones aritméticas o métodos dentro del propio texto.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide5">
+    <div class="slide-header">
+        <h2 class="slide-title">Control de Nulos (Null Safety)</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="type">String</span> nombre = <span class="string">'Carlos'</span>; <span class="comment">// No puede ser null</span><br><br>
+                <span class="type">String?</span> apellido; <span class="comment">// Puede almacenar un valor o null</span><br><br>
+                <span class="keyword">void</span> main() {<br>
+                &nbsp;&nbsp;apellido = <span class="string">'Pérez'</span>;<br>
+                &nbsp;&nbsp;<span class="comment">// Operador de respaldo si es nulo</span><br>
+                &nbsp;&nbsp;<span class="type">String</span> datos = apellido ?? <span class="string">'Sin apellido'</span>;<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Código Seguro</h3>
+                <ul>
+                    <li>Por defecto, los valores no aceptan valores nulos.</li>
+                    <li>El operador <code>?</code> declara explícitamente una variable opcional.</li>
+                    <li>El operador <code>??</code> define un valor alternativo de respaldo en caso de nulidad.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide6">
+    <div class="slide-header">
+        <h2 class="slide-title">Colecciones: Lists y Maps</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="comment">// Listas estructuradas (Arreglos)</span><br>
+                <span class="type">List</span>&lt;<span class="type">String</span>&gt; lenguajes = [<span class="string">'Dart'</span>, <span class="string">'Kotlin'</span>, <span class="string">'Swift'</span>];<br><br>
+                <span class="comment">// Mapas estructurados (Diccionarios Clave/Valor)</span><br>
+                <span class="type">Map</span>&lt;<span class="type">String</span>, <span class="type">dynamic</span>&gt; configuracion = {<br>
+                &nbsp;&nbsp;<span class="string">'puerto'</span>: <span class="number">8080</span>,<br>
+                &nbsp;&nbsp;<span class="string">'ssl'</span>: <span class="keyword">true</span>,<br>
+                &nbsp;&nbsp;<span class="string">'nombre'</span>: <span class="string">'Servidor Producción'</span><br>
+                };
+            </div>
+            <div class="explanation-box">
+                <h3>Colecciones</h3>
+                <ul>
+                    <li><code>List</code> maneja colecciones ordenadas mediante índices numéricos.</li>
+                    <li><code>Map</code> vincula claves únicas con valores de cualquier tipo utilizando la palabra clave <code>dynamic</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide7">
+    <div class="slide-header">
+        <h2 class="slide-title">Condicionales y Bucles</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="keyword">if</span> (empleados &gt; <span class="number">100</span>) {<br>
+                &nbsp;&nbsp;print(<span class="string">'Gran empresa'</span>);<br>
+                } <span class="keyword">else</span> {<br>
+                &nbsp;&nbsp;print(<span class="string">'Empresa en crecimiento'</span>);<br>
+                }<br><br>
+                <span class="comment">// Bucle optimizado para colecciones</span><br>
+                <span class="keyword">for</span> (<span class="keyword">var</span> lenguaje <span class="keyword">in</span> lenguajes) {<br>
+                &nbsp;&nbsp;print(<span class="string">'Framework compatible con: $lenguaje'</span>);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Lógica de Control</h3>
+                <ul>
+                    <li>Estructuras estándar <code>if / else</code> para la toma de decisiones básicas basadas en booleanos.</li>
+                    <li>Bucle <code>for...in</code> para recorrer elementos secuenciales en listas de forma simplificada y limpia.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide8">
+    <div class="slide-header">
+        <h2 class="slide-title">Funciones y Parámetros</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="comment">// Parámetros nombrados obligatorios y opcionales</span><br>
+                <span class="keyword">void</span> crearUsuario({<br>
+                &nbsp;&nbsp;<span class="keyword">required</span> <span class="type">String</span> login,<br>
+                &nbsp;&nbsp;<span class="type">String</span> rol = <span class="string">'Invitado'</span><br>
+                }) {<br>
+                &nbsp;&nbsp;print(<span class="string">'Usuario: $login con rol: $rol'</span>);<br>
+                }<br><br>
+                <span class="keyword">void</span> main() {<br>
+                &nbsp;&nbsp;crearUsuario(login: <span class="string">'soltel_dev'</span>);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Sintaxis Flexible</h3>
+                <ul>
+                    <li>Las llaves <code>{}</code> definen parámetros nombrados, evitando errores en el orden de los argumentos.</li>
+                    <li><code>required</code>: Fuerza el envío del parámetro en la llamada.</li>
+                    <li>Soporta asignación directa de valores por defecto (<code>= 'Invitado'</code>).</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide9">
+    <div class="slide-header">
+        <h2 class="slide-title">Clases y Constructores</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block" style="font-size: 15px;">
+                <span class="keyword">class</span> <span class="type">Colaborador</span> {<br>
+                &nbsp;&nbsp;<span class="type">String</span> nombre;<br>
+                &nbsp;&nbsp;<span class="type">String</span> area;<br><br>
+                &nbsp;&nbsp;<span class="comment">// Constructor simplificado de Dart</span><br>
+                &nbsp;&nbsp;<span class="type">Colaborador</span>(<span class="keyword">this</span>.nombre, <span class="keyword">this</span>.area);<br>
+                }<br><br>
+                <span class="keyword">void</span> main() {<br>
+                &nbsp;&nbsp;<span class="keyword">var</span> dev = <span class="type">Colaborador</span>(<span class="string">'Ana'</span>, <span class="string">'Mobile'</span>);<br>
+                &nbsp;&nbsp;print(dev.nombre);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Objetos y Clases</h3>
+                <ul>
+                    <li>Las propiedades se declaran definiendo su tipo explícito.</li>
+                    <li>El constructor usa la sintaxis abreviada <code>this.propiedad</code> para asignar variables directamente al instanciar, eliminando código repetitivo.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide10">
+    <div class="slide-header">
+        <h2 class="slide-title">Asincronía: Async / Await</h2>
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" class="slide-logo-right" alt="Soltel Logo">
+    </div>
+    <div class="content-area">
+        <div class="two-column">
+            <div class="code-block">
+                <span class="type">Future</span>&lt;<span class="type">String</span>&gt; consultarApi() <span class="keyword">async</span> {<br>
+                &nbsp;&nbsp;<span class="keyword">await</span> Future.delayed(Duration(seconds: <span class="number">3</span>));<br>
+                &nbsp;&nbsp;<span class="keyword">return</span> <span class="string">'Respuesta de datos'</span>;<br>
+                }<br><br>
+                <span class="keyword">void</span> main() <span class="keyword">async</span> {<br>
+                &nbsp;&nbsp;print(<span class="string">'Solicitando...'</span>);<br>
+                &nbsp;&nbsp;<span class="type">String</span> resultado = <span class="keyword">await</span> consultarApi();<br>
+                &nbsp;&nbsp;print(resultado);<br>
+                }
+            </div>
+            <div class="explanation-box">
+                <h3>Tareas Asíncronas</h3>
+                <ul>
+                    <li><code>Future&lt;T&gt;</code>: Representa un valor que estará disponible en el futuro.</li>
+                    <li><code>async</code>: Convierte un método en asíncrono.</li>
+                    <li><code>await</code>: Pausa la ejecución de esa función de manera estructurada hasta que se resuelva la petición.</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="slide-container" id="slide11" style="justify-content: center;">
+    <div style="text-align: center;">
+        <img src="https://media.licdn.com/dms/image/v2/C560BAQGBbY87T7efJQ/company-logo_200_200/company-logo_200_200/0/1631371657882?e=2147483647&v=beta&t=lKEDC0DkfFS8n7LTo524Q2t-MniDDZbEobrmOof1tdw" alt="Soltel Logo" style="height: 70px; margin-bottom: 30px;">
+        <h2 style="font-size: 54px; margin-bottom: 20px;">SINTAXIS DOMINADA</h2>
+        <div style="width: 80px; height: 6px; background: var(--soltel-red); margin: 0 auto 30px;"></div>
+        <p style="max-width: 700px; margin: 0 auto;">Con estos fundamentos prácticos de variables, funciones, tipado de nulos y objetos, estás listo para estructurar cualquier Widget en Flutter.</p>
+    </div>
+</div>
+
+</body>
+</html>
+
