@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'responsive_dashboard.dart';
-import 'lifecycle_lab.dart';
-import 'sliver_lab.dart';
-import 'reactive_lab.dart';
+import 'character_dashboard.dart';
+import 'book_wiki.dart';
+import 'spell_vault.dart';
+import 'house_explorer.dart';
 
 void main() {
   runApp(const SoltelMasterclassApp());
@@ -18,7 +18,7 @@ class SoltelMasterclassApp extends StatelessWidget {
       title: 'Soltel Masterclass Módulo 2',
       theme: ThemeData(
         useMaterial3: true,
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFFEB4B4B)),
+        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF740001)), // Gryffindor Red
         textTheme: const TextTheme(
           displayMedium: TextStyle(fontWeight: FontWeight.bold),
           titleLarge: TextStyle(fontWeight: FontWeight.bold),
@@ -41,29 +41,28 @@ class _MasterclassNavigatorState extends State<MasterclassNavigator> {
   final PageController _controller = PageController();
   int _currentPage = 0;
 
-  // Instancia del controlador para el Bloque D (Reactive Lab)
-  late AppController _appController;
+  late HouseController _houseController;
 
   @override
   void initState() {
     super.initState();
-    _appController = AppController();
+    _houseController = HouseController();
   }
 
   @override
   void dispose() {
     _controller.dispose();
-    _appController.dispose();
+    _houseController.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final List<Widget> blocks = [
-      const ResponsiveDashboard(),
-      const AdvancedLifecycleWidget(endpoint: 'https://api.soltel.es/v1'),
-      const SliverArchitectureView(),
-      ReactiveArchitectureView(controller: _appController),
+      const CharacterDashboard(),
+      const BookWiki(endpoint: 'https://potterapi-fedeperin.vercel.app/en'),
+      const SpellVaultView(),
+      HouseExplorerView(controller: _houseController),
     ];
 
     return Scaffold(
@@ -107,7 +106,7 @@ class _MasterclassNavigatorState extends State<MasterclassNavigator> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 20),
             child: Text(
-              "BLOQUE ${_currentPage + 1} / $totalBlocks", 
+              "SECCIÓN ${_currentPage + 1} / $totalBlocks", 
               style: const TextStyle(fontWeight: FontWeight.bold)
             ),
           ),
